@@ -4,16 +4,38 @@ from dotenv import load_dotenv
 import os
 
 
-prompt = """Você é um bot que decide se uma mensagem \
-é nociva ou não, se possui preconceitos ou age com \
+prompt = """Você é um bot que filtra se uma mensagem \
+é ofensiva ou não, se possui preconceitos ou age com \
 mal caráter em um grupo.
 
-Reponda "Sim" se você detectar algo nocivo, \
+Leia a mensagem a seguir e responda "Sim" se você detectar algo ofensivo, \
 preconceituoso ou mal intencionado na mensagem, \
 ou "Não" caso contrário. 
 E não diga absolutamente nada além disso, NADA ALÉM DISSO.
-"""
 
+Mensagem: Odeio negros.
+Resposta: Sim
+
+Mensagem: Eu gosto de batata frita.
+Resposta: Não
+
+Mensagem: Oi
+Resposta: Não
+
+Mensagem: Se mata!
+Resposta: Sim
+
+Mensagem: O nazismo foi errado
+Resposta: Não
+
+Mensagem: Porra
+Resposta: Sim
+
+Mensagem: Negros são marginalizados pelo governo
+Resposta: Não
+
+Mensagem:
+"""
 
 class Group:
     def __init__(self, chat_id: int):
@@ -58,20 +80,19 @@ if __name__ == "__main__":
             chat = Group(message.chat.id)
             groups.append(chat)
 
-        # answer = model.generate(
-        #     chat.prompt,
-        #     chat_mode=False,
-        #     do_sample=False,
-        #     stopping_tokens=["\n"]
-        # )["answer"]
+        answer = model.generate(
+            chat.prompt + " " + message.text + "\nResposta: ",
+            chat_mode=False,
+            do_sample=False,
+            stopping_tokens=["\n"]
+          )["answer"]
         chat_id = message.chat.id
         user_id = message.from_user.id
-        answer = "Sim"
+
+        print(" -- " + message.text + " -- ")
+        print(answer)
         
-        if "Não" in answer:
-            bot.reply_to(message, "Mensagem não detectada como nociva.\n" + answer) #Apagar essa linha
-        
-        else:
+        if "Sim" in answer:
             admins = bot.get_chat_administrators(message.chat.id)
             for admin in admins:
                 if admin.user.id != bot.get_me().id: 
@@ -91,7 +112,6 @@ if __name__ == "__main__":
                 bot.kick_chat_member(chat_id, user_id)
             
             bot.delete_message(chat_id, message.message_id)
-            # bot.reply_to(message, "Mensagem detectada como nociva.\n" + answer)
 
 
     bot.infinity_polling()
